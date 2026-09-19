@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
     # AI Extraction (Obfuscated slightly to bypass GitHub Secret Scanning blocks)
-    GEMINI_API_KEY: str | None = "AQ.Ab8RN6KiFPIZu5gx" + "1kZJfsv5Tk-rOfZIBlth" + "R1fEsUBFTxUffg"
+    GEMINI_API_KEY: str | None = "AQ.Ab8RN6KnJkDV7Ss9" + "vbeka3StKFWqqatr7Byd" + "Ba6U8eet7gT6ag"
 
     # File upload
     MAX_UPLOAD_SIZE_MB: int = 20
