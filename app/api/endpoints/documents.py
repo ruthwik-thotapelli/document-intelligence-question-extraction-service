@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_db
@@ -33,6 +33,7 @@ MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
     ),
 )
 async def upload_document(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     related_doc_id: int | None = Query(
         None, description="ID of a related document (e.g., answer key)"
@@ -61,7 +62,10 @@ async def upload_document(
         )
 
     # Validate magic bytes (prevent malicious uploads)
-    validate_file(file_bytes, file.content_type)
+    try:
+        validate_file(file_bytes, file.content_type)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
     # If related doc provided, make sure it belongs to the user
     if related_doc_id:
@@ -94,17 +98,16 @@ async def upload_document(
     db.commit()
     db.refresh(doc)
 
-    # Dispatch Celery task (falls back to synchronous if Redis unavailable)
+    # Dispatch Celery task (falls back to FastAPI BackgroundTasks if Redis unavailable)
     try:
         process_document.delay(doc.id)
         logger.info(f"Document {doc.id} queued via Celery by user {current_user.id}.")
     except Exception as celery_err:
         logger.warning(
-            f"Celery unavailable ({celery_err}), running extraction synchronously for doc {doc.id}."
+            f"Celery unavailable ({celery_err}), queuing via FastAPI BackgroundTasks for doc {doc.id}."
         )
         from app.tasks.document_tasks import run_extraction_sync
-        run_extraction_sync(doc.id)
-
+        background_tasks.add_task(run_extraction_sync, doc.id)
 
     return DocumentUploadResponse(
         id=doc.id,
