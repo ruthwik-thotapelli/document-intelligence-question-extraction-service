@@ -2,6 +2,7 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     """
     Returns errors in RFC 7807 Problem Details format.
@@ -17,6 +18,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
             "instance": str(request.url.path),
         },
     )
+
 
 async def generic_exception_handler(request: Request, exc: Exception):
     """Fallback handler for unhandled exceptions."""

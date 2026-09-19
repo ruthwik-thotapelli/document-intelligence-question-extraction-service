@@ -1,11 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.router import api_router
 from app.core.config import settings
-
-from starlette.exceptions import HTTPException as StarletteHTTPException
-from app.core.exceptions import http_exception_handler, generic_exception_handler
+from app.core.exceptions import generic_exception_handler, http_exception_handler
 
 app = FastAPI(
     title=settings.PROJECT_NAME,

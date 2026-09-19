@@ -1,13 +1,11 @@
 """Tests for question retrieval endpoints."""
+
 import io
-import pytest
-from unittest.mock import patch
+
 from sqlalchemy.orm import Session
 
 from app.models.document import Document
 from app.models.question import Question
-from app.core.database import SessionLocal
-
 
 VALID_PDF = b"%PDF-1.4 fake content"
 
@@ -54,9 +52,7 @@ def _create_completed_doc_with_questions(client, auth_headers, db: Session, user
 
 
 def test_get_questions_for_completed_doc(client, auth_headers, db):
-    doc_id, q1_id, q2_id = _create_completed_doc_with_questions(
-        client, auth_headers, db, user_id=1
-    )
+    doc_id, q1_id, q2_id = _create_completed_doc_with_questions(client, auth_headers, db, user_id=1)
     resp = client.get(f"/api/v1/documents/{doc_id}/questions", headers=auth_headers)
     assert resp.status_code == 200
     questions = resp.json()
@@ -66,9 +62,7 @@ def test_get_questions_for_completed_doc(client, auth_headers, db):
 
 
 def test_get_single_question(client, auth_headers, db):
-    doc_id, q1_id, q2_id = _create_completed_doc_with_questions(
-        client, auth_headers, db, user_id=1
-    )
+    doc_id, q1_id, q2_id = _create_completed_doc_with_questions(client, auth_headers, db, user_id=1)
     resp = client.get(f"/api/v1/questions/{q1_id}", headers=auth_headers)
     assert resp.status_code == 200
     data = resp.json()
@@ -79,9 +73,7 @@ def test_get_single_question(client, auth_headers, db):
 
 
 def test_get_warnings_returns_low_confidence(client, auth_headers, db):
-    doc_id, q1_id, q2_id = _create_completed_doc_with_questions(
-        client, auth_headers, db, user_id=1
-    )
+    doc_id, q1_id, q2_id = _create_completed_doc_with_questions(client, auth_headers, db, user_id=1)
     resp = client.get(f"/api/v1/documents/{doc_id}/warnings", headers=auth_headers)
     assert resp.status_code == 200
     warnings = resp.json()
@@ -102,9 +94,7 @@ def test_get_questions_pending_doc_returns_202(client, auth_headers):
 
 
 def test_get_answers(client, auth_headers, db):
-    doc_id, q1_id, q2_id = _create_completed_doc_with_questions(
-        client, auth_headers, db, user_id=1
-    )
+    doc_id, q1_id, q2_id = _create_completed_doc_with_questions(client, auth_headers, db, user_id=1)
     resp = client.get(f"/api/v1/documents/{doc_id}/answers", headers=auth_headers)
     assert resp.status_code == 200
     answers = resp.json()

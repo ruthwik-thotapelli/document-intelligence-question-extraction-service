@@ -1,8 +1,11 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Float, DateTime
+from datetime import datetime
+
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
-from datetime import datetime
+
 from .base import Base
+
 
 class Question(Base):
     __tablename__ = "questions"
@@ -11,10 +14,10 @@ class Question(Base):
     document_id = Column(Integer, ForeignKey("documents.id"))
     question_number = Column(String, nullable=True)
     text = Column(String, nullable=False)
-    options = Column(JSONB, nullable=True) # list of options
+    options = Column(JSONB, nullable=True)  # list of options
     answer = Column(String, nullable=True)
     confidence = Column(Float, nullable=True)
-    source_pages = Column(JSONB, nullable=True) # list of page numbers
+    source_pages = Column(JSONB, nullable=True)  # list of page numbers
     created_at = Column(DateTime, default=datetime.utcnow)
 
     document = relationship("Document", back_populates="questions")

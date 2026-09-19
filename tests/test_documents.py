@@ -1,7 +1,6 @@
 """Tests for document upload and management endpoints."""
-import io
-import pytest
 
+import io
 
 # Minimal valid PDF magic bytes
 VALID_PDF = b"%PDF-1.4 fake content"
@@ -76,12 +75,12 @@ def test_get_document_status(client, auth_headers):
 def test_get_document_unauthorized(client, auth_headers):
     """A second user should not be able to access another user's document."""
     # Register second user
-    client.post("/api/v1/auth/register", json={
-        "email": "user2@example.com", "password": "Pass123!"
-    })
-    login_resp = client.post("/api/v1/auth/login", data={
-        "username": "user2@example.com", "password": "Pass123!"
-    })
+    client.post(
+        "/api/v1/auth/register", json={"email": "user2@example.com", "password": "Pass123!"}
+    )
+    login_resp = client.post(
+        "/api/v1/auth/login", data={"username": "user2@example.com", "password": "Pass123!"}
+    )
     user2_headers = {"Authorization": f"Bearer {login_resp.json()['access_token']}"}
 
     # Upload with user1

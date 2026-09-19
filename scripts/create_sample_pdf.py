@@ -2,8 +2,9 @@
 Generate sample PDF and image files for demonstration.
 Run: python scripts/create_sample_pdf.py
 """
+
 import os
-import sys
+
 
 def create_sample_pdf():
     """Create a simple sample question paper PDF."""
@@ -51,18 +52,25 @@ startxref
     c.line(50, height - 90, width - 50, height - 90)
 
     questions = [
-        ("1.", "What is the capital of France?",
-         ["A. Berlin", "B. Madrid", "C. Paris", "D. Rome"]),
-        ("2.", "Which planet is known as the Red Planet?",
-         ["A. Earth", "B. Mars", "C. Jupiter", "D. Saturn"]),
-        ("3.", "What is the chemical symbol for water?",
-         ["A. CO2", "B. H2O", "C. NaCl", "D. O2"]),
-        ("4.", "Who developed the theory of relativity?",
-         ["A. Isaac Newton", "B. Nikola Tesla", "C. Albert Einstein", "D. Stephen Hawking"]),
-        ("5.", "Explain in detail the process of photosynthesis and its significance "
-               "to life on Earth. Your answer should cover the light-dependent and "
-               "light-independent reactions. (This question continues on the next page.)",
-         None),
+        ("1.", "What is the capital of France?", ["A. Berlin", "B. Madrid", "C. Paris", "D. Rome"]),
+        (
+            "2.",
+            "Which planet is known as the Red Planet?",
+            ["A. Earth", "B. Mars", "C. Jupiter", "D. Saturn"],
+        ),
+        ("3.", "What is the chemical symbol for water?", ["A. CO2", "B. H2O", "C. NaCl", "D. O2"]),
+        (
+            "4.",
+            "Who developed the theory of relativity?",
+            ["A. Isaac Newton", "B. Nikola Tesla", "C. Albert Einstein", "D. Stephen Hawking"],
+        ),
+        (
+            "5.",
+            "Explain in detail the process of photosynthesis and its significance "
+            "to life on Earth. Your answer should cover the light-dependent and "
+            "light-independent reactions. (This question continues on the next page.)",
+            None,
+        ),
     ]
 
     y = height - 130
@@ -116,17 +124,21 @@ def create_sample_image():
         from PIL import Image, ImageDraw, ImageFont
     except ImportError:
         print("Pillow not installed. Creating placeholder PNG instead.")
-        import struct, zlib
+        import struct
+        import zlib
 
         def create_png(width, height, color=(255, 255, 255)):
             def make_chunk(chunk_type, data):
                 c = chunk_type + data
-                return struct.pack('>I', len(data)) + c + struct.pack('>I', zlib.crc32(c) & 0xffffffff)
-            header = b'\x89PNG\r\n\x1a\n'
-            ihdr = make_chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, 2, 0, 0, 0))
-            raw = b''.join(b'\x00' + bytes(color) * width for _ in range(height))
-            idat = make_chunk(b'IDAT', zlib.compress(raw))
-            iend = make_chunk(b'IEND', b'')
+                return (
+                    struct.pack(">I", len(data)) + c + struct.pack(">I", zlib.crc32(c) & 0xFFFFFFFF)
+                )
+
+            header = b"\x89PNG\r\n\x1a\n"
+            ihdr = make_chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0))
+            raw = b"".join(b"\x00" + bytes(color) * width for _ in range(height))
+            idat = make_chunk(b"IDAT", zlib.compress(raw))
+            iend = make_chunk(b"IEND", b"")
             return header + ihdr + idat + iend
 
         with open("samples/question_image.png", "wb") as f:
@@ -137,12 +149,18 @@ def create_sample_image():
     os.makedirs("samples", exist_ok=True)
     img = Image.new("RGB", (800, 400), color=(255, 255, 255))
     draw = ImageDraw.Draw(img)
-    draw.text((20, 20), "Q1. What is the boiling point of water at standard pressure?", fill=(0, 0, 0))
+    draw.text(
+        (20, 20), "Q1. What is the boiling point of water at standard pressure?", fill=(0, 0, 0)
+    )
     draw.text((40, 60), "A. 90°C", fill=(0, 0, 0))
     draw.text((40, 90), "B. 100°C", fill=(0, 0, 0))
     draw.text((40, 120), "C. 110°C", fill=(0, 0, 0))
     draw.text((40, 150), "D. 120°C", fill=(0, 0, 0))
-    draw.text((20, 200), "Q2. True or False: The Earth is the largest planet in our solar system.", fill=(0, 0, 0))
+    draw.text(
+        (20, 200),
+        "Q2. True or False: The Earth is the largest planet in our solar system.",
+        fill=(0, 0, 0),
+    )
     draw.text((20, 240), "Answer: False", fill=(50, 150, 50))
     img.save("samples/question_image.png")
     print("✓ Created samples/question_image.png")

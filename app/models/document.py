@@ -1,7 +1,10 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
-from sqlalchemy.orm import relationship
 from datetime import datetime
+
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
+
 from .base import Base
+
 
 class Document(Base):
     __tablename__ = "documents"
@@ -9,7 +12,7 @@ class Document(Base):
     id = Column(Integer, primary_key=True, index=True)
     filename = Column(String, nullable=False)
     file_path = Column(String, nullable=False)
-    status = Column(String, default="pending") # pending, processing, completed, failed
+    status = Column(String, default="pending")  # pending, processing, completed, failed
     user_id = Column(Integer, ForeignKey("users.id"))
     related_doc_id = Column(Integer, ForeignKey("documents.id"), nullable=True)
     error_message = Column(String, nullable=True)

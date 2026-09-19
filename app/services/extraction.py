@@ -17,13 +17,14 @@ import logging
 import mimetypes
 import re
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 # ─── Extraction result schema ────────────────────────────────────────────────
 
-def _empty_result() -> List[Dict[str, Any]]:
+
+def _empty_result() -> list[dict[str, Any]]:
     return []
 
 
@@ -50,7 +51,7 @@ If no questions are found, return an empty array: []
 """
 
 
-def extract_questions(file_path: str) -> List[Dict[str, Any]]:
+def extract_questions(file_path: str) -> list[dict[str, Any]]:
     """
     Main extraction entry point.
     Falls back to mock extraction if GEMINI_API_KEY is not configured.
@@ -68,7 +69,7 @@ def extract_questions(file_path: str) -> List[Dict[str, Any]]:
         raise RuntimeError(f"AI extraction error: {exc}") from exc
 
 
-def _gemini_extraction(file_path: str, api_key: str) -> List[Dict[str, Any]]:
+def _gemini_extraction(file_path: str, api_key: str) -> list[dict[str, Any]]:
     import google.generativeai as genai
 
     genai.configure(api_key=api_key)
@@ -77,8 +78,12 @@ def _gemini_extraction(file_path: str, api_key: str) -> List[Dict[str, Any]]:
     mime_type, _ = mimetypes.guess_type(str(path))
     if mime_type is None:
         suffix = path.suffix.lower()
-        mime_map = {".pdf": "application/pdf", ".jpg": "image/jpeg",
-                    ".jpeg": "image/jpeg", ".png": "image/png"}
+        mime_map = {
+            ".pdf": "application/pdf",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".png": "image/png",
+        }
         mime_type = mime_map.get(suffix, "application/octet-stream")
 
     logger.info(f"Uploading {path.name} ({mime_type}) to Gemini File API…")
@@ -89,7 +94,7 @@ def _gemini_extraction(file_path: str, api_key: str) -> List[Dict[str, Any]]:
     response = model.generate_content(
         [uploaded_file, EXTRACTION_PROMPT],
         generation_config=genai.GenerationConfig(
-            temperature=0.1,           # low temperature → deterministic, structured output
+            temperature=0.1,  # low temperature → deterministic, structured output
             response_mime_type="application/json",
         ),
     )
@@ -102,7 +107,7 @@ def _gemini_extraction(file_path: str, api_key: str) -> List[Dict[str, Any]]:
     return questions
 
 
-def _parse_json_response(raw: str) -> List[Dict[str, Any]]:
+def _parse_json_response(raw: str) -> list[dict[str, Any]]:
     """Robustly parse JSON even if the model adds minor formatting."""
     # Strip markdown code fences if present
     raw = re.sub(r"^```(?:json)?\s*", "", raw, flags=re.MULTILINE)
@@ -121,7 +126,7 @@ def _parse_json_response(raw: str) -> List[Dict[str, Any]]:
         return []
 
 
-def _mock_extraction(file_path: str) -> List[Dict[str, Any]]:
+def _mock_extraction(file_path: str) -> list[dict[str, Any]]:
     """
     Returns realistic mock data when no API key is available.
     Used for local development and CI testing.

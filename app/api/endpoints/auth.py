@@ -3,16 +3,17 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
-from app.core.security import create_access_token, verify_password, get_password_hash
+from app.core.security import create_access_token, get_password_hash, verify_password
 from app.models.user import User
-from app.schemas.user import UserCreate, UserResponse
 from app.schemas.token import Token
+from app.schemas.user import UserCreate, UserResponse
 
 router = APIRouter()
 
 
-@router.post("/register", response_model=UserResponse, status_code=201,
-             summary="Register a new user")
+@router.post(
+    "/register", response_model=UserResponse, status_code=201, summary="Register a new user"
+)
 def register(user_in: UserCreate, db: Session = Depends(get_db)):
     """Register a new user account."""
     existing = db.query(User).filter(User.email == user_in.email).first()

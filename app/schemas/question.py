@@ -1,17 +1,18 @@
-from pydantic import BaseModel
-from typing import Optional, List, Any
 from datetime import datetime
+from typing import Any
+
+from pydantic import BaseModel
 
 
 class QuestionResponse(BaseModel):
     id: int
     document_id: int
-    question_number: Optional[str] = None
+    question_number: str | None = None
     text: str
-    options: Optional[List[Any]] = None
-    answer: Optional[str] = None
-    confidence: Optional[float] = None
-    source_pages: Optional[List[int]] = None
+    options: list[Any] | None = None
+    answer: str | None = None
+    confidence: float | None = None
+    source_pages: list[int] | None = None
     created_at: datetime
 
     class Config:
@@ -20,7 +21,7 @@ class QuestionResponse(BaseModel):
 
 class ExtractionWarning(BaseModel):
     question_id: int
-    question_number: Optional[str]
+    question_number: str | None
     text: str
     confidence: float
     reason: str

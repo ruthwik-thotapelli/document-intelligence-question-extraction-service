@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db, get_current_user
-from app.models.user import User
-from app.models.question import Question
+from app.api.deps import get_current_user, get_db
 from app.models.document import Document
+from app.models.question import Question
+from app.models.user import User
 from app.schemas.question import QuestionResponse
 
 router = APIRouter()
@@ -29,10 +29,14 @@ def get_question(
         )
 
     # Ensure user owns the parent document
-    doc = db.query(Document).filter(
-        Document.id == question.document_id,
-        Document.user_id == current_user.id,
-    ).first()
+    doc = (
+        db.query(Document)
+        .filter(
+            Document.id == question.document_id,
+            Document.user_id == current_user.id,
+        )
+        .first()
+    )
     if not doc:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

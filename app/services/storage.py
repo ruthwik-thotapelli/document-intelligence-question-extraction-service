@@ -1,7 +1,5 @@
-import os
-import uuid
-import hashlib
 import logging
+import uuid
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -22,7 +20,7 @@ def validate_file(file_bytes: bytes, content_type: str) -> None:
     """Validate file magic bytes to prevent malicious uploads."""
     magic_signatures = MAGIC_BYTES.get(content_type, [])
     for sig in magic_signatures:
-        if file_bytes[:len(sig)] == sig:
+        if file_bytes[: len(sig)] == sig:
             return
     raise ValueError(
         f"File content does not match declared content type '{content_type}'. "

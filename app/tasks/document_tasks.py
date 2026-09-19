@@ -13,15 +13,14 @@ Idempotent: Re-queuing a completed document will be a no-op.
 
 import logging
 from datetime import datetime
-from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from app.worker import celery_app
 from app.core.database import SessionLocal
 from app.models.document import Document
 from app.models.question import Question
 from app.services.extraction import extract_questions
+from app.worker import celery_app
 
 logger = logging.getLogger(__name__)
 
@@ -81,10 +80,7 @@ def process_document(self, document_id: int):
         doc.updated_at = datetime.utcnow()
         db.commit()
 
-        logger.info(
-            f"[Task] Document {document_id} completed. "
-            f"{len(extracted)} question(s) saved."
-        )
+        logger.info(f"[Task] Document {document_id} completed. {len(extracted)} question(s) saved.")
 
     except Exception as exc:
         db.rollback()

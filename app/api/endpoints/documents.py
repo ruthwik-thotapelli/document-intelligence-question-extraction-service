@@ -1,21 +1,14 @@
-import os
-import uuid
 import logging
-from typing import Optional, List
-from datetime import datetime
 
-from fastapi import (
-    APIRouter, Depends, HTTPException, UploadFile, File,
-    status, BackgroundTasks, Query
-)
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db, get_current_user
-from app.models.user import User
+from app.api.deps import get_current_user, get_db
 from app.models.document import Document
 from app.models.question import Question
-from app.schemas.document import DocumentUploadResponse, DocumentResponse, DocumentStatusResponse
-from app.schemas.question import QuestionResponse, ExtractionWarning
+from app.models.user import User
+from app.schemas.document import DocumentResponse, DocumentStatusResponse, DocumentUploadResponse
+from app.schemas.question import ExtractionWarning, QuestionResponse
 from app.services.storage import save_upload, validate_file
 from app.tasks.document_tasks import process_document
 
@@ -41,7 +34,9 @@ MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
 )
 async def upload_document(
     file: UploadFile = File(...),
-    related_doc_id: Optional[int] = Query(None, description="ID of a related document (e.g., answer key)"),
+    related_doc_id: int | None = Query(
+        None, description="ID of a related document (e.g., answer key)"
+    ),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -70,10 +65,14 @@ async def upload_document(
 
     # If related doc provided, make sure it belongs to the user
     if related_doc_id:
-        related = db.query(Document).filter(
-            Document.id == related_doc_id,
-            Document.user_id == current_user.id,
-        ).first()
+        related = (
+            db.query(Document)
+            .filter(
+                Document.id == related_doc_id,
+                Document.user_id == current_user.id,
+            )
+            .first()
+        )
         if not related:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -143,7 +142,7 @@ def get_document(
 
 @router.get(
     "/{doc_id}/questions",
-    response_model=List[QuestionResponse],
+    response_model=list[QuestionResponse],
     summary="Retrieve all extracted questions for a document",
 )
 def get_questions(
@@ -162,7 +161,7 @@ def get_questions(
 
 @router.get(
     "/{doc_id}/answers",
-    response_model=List[dict],
+    response_model=list[dict],
     summary="Retrieve answer-key information for all questions in a document",
     description=(
         "Returns a list of question IDs with their associated answers. "
@@ -185,14 +184,18 @@ def get_answers(
 
     # Also include questions from related docs (e.g. separate answer-key document)
     if doc.related_doc_id:
-        related_doc = db.query(Document).filter(
-            Document.id == doc.related_doc_id,
-            Document.user_id == current_user.id,
-        ).first()
+        related_doc = (
+            db.query(Document)
+            .filter(
+                Document.id == doc.related_doc_id,
+                Document.user_id == current_user.id,
+            )
+            .first()
+        )
         if related_doc and related_doc.status == "completed":
-            related_questions = db.query(Question).filter(
-                Question.document_id == related_doc.id
-            ).all()
+            related_questions = (
+                db.query(Question).filter(Question.document_id == related_doc.id).all()
+            )
             questions = list(questions) + list(related_questions)
 
     return [
@@ -209,7 +212,7 @@ def get_answers(
 
 @router.get(
     "/{doc_id}/warnings",
-    response_model=List[ExtractionWarning],
+    response_model=list[ExtractionWarning],
     summary="Retrieve questions flagged for human review",
     description=(
         "Returns questions with low confidence scores or missing key information "
@@ -254,17 +257,23 @@ def get_warnings(
 
 @router.get(
     "/",
-    response_model=List[DocumentResponse],
+    response_model=list[DocumentResponse],
     summary="List all documents uploaded by the current user",
 )
 def list_documents(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return db.query(Document).filter(Document.user_id == current_user.id).order_by(Document.created_at.desc()).all()
+    return (
+        db.query(Document)
+        .filter(Document.user_id == current_user.id)
+        .order_by(Document.created_at.desc())
+        .all()
+    )
 
 
 # ─── Helpers ────────────────────────────────────────────────────────────────
+
 
 def _get_doc_for_user(doc_id: int, user_id: int, db: Session) -> Document:
     doc = db.query(Document).filter(Document.id == doc_id, Document.user_id == user_id).first()
@@ -276,7 +285,7 @@ def _get_doc_for_user(doc_id: int, user_id: int, db: Session) -> Document:
     return doc
 
 
-def _answer_status(answer: Optional[str], confidence: Optional[float]) -> str:
+def _answer_status(answer: str | None, confidence: float | None) -> str:
     if answer is None:
         return "not_found"
     if confidence is not None and confidence < 0.6:
