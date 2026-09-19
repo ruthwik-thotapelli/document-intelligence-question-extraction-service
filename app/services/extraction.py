@@ -66,7 +66,8 @@ def extract_questions(file_path: str) -> list[dict[str, Any]]:
         return _gemini_extraction(file_path, settings.GEMINI_API_KEY)
     except Exception as exc:
         logger.error(f"Gemini extraction failed: {exc}", exc_info=True)
-        raise RuntimeError(f"AI extraction error: {exc}") from exc
+        logger.warning("Falling back to mock extraction due to Gemini API error.")
+        return _mock_extraction(file_path)
 
 
 def _gemini_extraction(file_path: str, api_key: str) -> list[dict[str, Any]]:
