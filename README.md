@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Page%20with%20curl/3D/page_with_curl_3d.png" width="120" alt="Document Emoji"/>
+![header](https://capsule-render.vercel.app/api?type=waving&color=0:4F46E5,50:7C3AED,100:06B6D4&height=240&section=header&text=Document%20Intelligence%20Engine&fontSize=42&fontColor=ffffff&fontAlignY=40&desc=Pragati%20Bharati%20%7C%20AI-Powered%20Asynchronous%20Exam%20Paper%20Extraction%20Service&descAlignY=62&descSize=15&animation=fadeIn)
 
-# Pragati Bharati: Document Intelligence Engine
+# 🧠 Pragati Bharati: Document Intelligence Engine
 
 **Transforming unstructured exam papers into structured knowledge graphs via asynchronous AI pipelines.**
 
@@ -151,3 +151,5 @@ To validate the core requirements of this assignment, please follow this testing
 <div align="center">
   <p><b>Designed & Engineered for the Pragati Bharati Evaluation</b></p>
 </div>
+
+![footer](https://capsule-render.vercel.app/api?type=waving&color=0:06B6D4,50:7C3AED,100:4F46E5&height=140&section=footer&animation=fadeIn)
