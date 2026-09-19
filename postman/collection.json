@@ -1,0 +1,238 @@
+{
+  "info": {
+    "name": "Document Intelligence & Question Extraction Service",
+    "description": "Complete API workflow for the Document Intelligence service. Run requests in order.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "base_url", "value": "http://localhost:8000"},
+    {"key": "token", "value": ""},
+    {"key": "doc_id", "value": ""},
+    {"key": "question_id", "value": ""}
+  ],
+  "item": [
+    {
+      "name": "0. Health Check",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/health",
+        "description": "Verify the service is running."
+      }
+    },
+    {
+      "name": "1. Register User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 201', () => pm.response.to.have.status(201));",
+              "pm.test('Has email', () => pm.expect(pm.response.json().email).to.exist);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/v1/auth/register",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"email\": \"demo@example.com\", \"password\": \"Demo1234!\"}"
+        }
+      }
+    },
+    {
+      "name": "2. Login (Get Token)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set('token', json.access_token);",
+              "pm.test('Token received', () => pm.expect(json.access_token).to.exist);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/v1/auth/login",
+        "header": [{"key": "Content-Type", "value": "application/x-www-form-urlencoded"}],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {"key": "username", "value": "demo@example.com"},
+            {"key": "password", "value": "Demo1234!"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "3a. Upload PDF",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 202', () => pm.response.to.have.status(202));",
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set('doc_id', json.id);",
+              "pm.test('Status is pending', () => pm.expect(json.status).to.equal('pending'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/v1/documents/upload",
+        "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {"key": "file", "type": "file", "description": "Select samples/question_paper.pdf"}
+          ]
+        },
+        "description": "Upload a PDF. Select samples/question_paper.pdf from the repo."
+      }
+    },
+    {
+      "name": "3b. Upload Image",
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/v1/documents/upload",
+        "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {"key": "file", "type": "file", "description": "Select samples/question_image.png"}
+          ]
+        },
+        "description": "Upload an image. Select samples/question_image.png from the repo."
+      }
+    },
+    {
+      "name": "3c. Upload Invalid File (Expect 415)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 415 for unsupported type', () => pm.response.to.have.status(415));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{base_url}}/api/v1/documents/upload",
+        "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {"key": "file", "src": [], "type": "file", "description": "Select any .txt or .exe file"}
+          ]
+        },
+        "description": "Demonstrates rejection of unsupported file types."
+      }
+    },
+    {
+      "name": "4. Check Processing Status",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "const json = pm.response.json();",
+              "pm.test('Status field exists', () => pm.expect(json.status).to.be.oneOf(['pending','processing','completed','failed']));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/v1/documents/{{doc_id}}/status",
+        "header": [{"key": "Authorization", "value": "Bearer {{token}}"}]
+      }
+    },
+    {
+      "name": "5. Get Extracted Questions",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "  const questions = pm.response.json();",
+              "  if (questions.length > 0) {",
+              "    pm.collectionVariables.set('question_id', questions[0].id);",
+              "  }",
+              "  pm.test('Questions is an array', () => pm.expect(questions).to.be.an('array'));",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/v1/documents/{{doc_id}}/questions",
+        "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+        "description": "Returns 202 if still processing, 200 with questions when completed."
+      }
+    },
+    {
+      "name": "6. Get Single Question",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/v1/questions/{{question_id}}",
+        "header": [{"key": "Authorization", "value": "Bearer {{token}}"}]
+      }
+    },
+    {
+      "name": "7. Get Answer Key",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/v1/documents/{{doc_id}}/answers",
+        "header": [{"key": "Authorization", "value": "Bearer {{token}}"}]
+      }
+    },
+    {
+      "name": "8. Get Warnings (Low Confidence Items)",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/v1/documents/{{doc_id}}/warnings",
+        "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+        "description": "Returns questions with confidence < 0.7, missing numbers, or missing answers."
+      }
+    },
+    {
+      "name": "9. List All My Documents",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/v1/documents/",
+        "header": [{"key": "Authorization", "value": "Bearer {{token}}"}]
+      }
+    },
+    {
+      "name": "10. Access Without Token (Expect 401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 401 without auth', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/api/v1/documents/",
+        "description": "Demonstrates authentication requirement."
+      }
+    }
+  ]
+}
