@@ -1,0 +1,46 @@
+[
+  {
+    "question": "What is the capital of France?",
+    "question_number": "1",
+    "question_type": "mcq",
+    "options": ["A. Berlin", "B. Madrid", "C. Paris", "D. Rome"],
+    "answer": "C",
+    "source_pages": [1],
+    "has_image": false,
+    "confidence": 0.97,
+    "review_notes": null
+  },
+  {
+    "question": "Explain the significance of the Turing Test in artificial intelligence.",
+    "question_number": "2",
+    "question_type": "long_answer",
+    "options": null,
+    "answer": null,
+    "source_pages": [1, 2],
+    "has_image": false,
+    "confidence": 0.80,
+    "review_notes": "Question spans two pages; continuation inferred from context."
+  },
+  {
+    "question": "The speed of light in vacuum is approximately _____ m/s.",
+    "question_number": "3",
+    "question_type": "fill_blank",
+    "options": null,
+    "answer": "3 \u00d7 10^8",
+    "source_pages": [2],
+    "has_image": false,
+    "confidence": 0.88,
+    "review_notes": null
+  },
+  {
+    "question": "[Partial text \u2014 OCR noise detected] The process of ph__synthesis converts CO2 and H2O into\u2026",
+    "question_number": null,
+    "question_type": "unknown",
+    "options": null,
+    "answer": null,
+    "source_pages": [3],
+    "has_image": true,
+    "confidence": 0.42,
+    "review_notes": "OCR artefacts detected. Question number missing. Manual review recommended."
+  }
+]
