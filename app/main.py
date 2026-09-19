@@ -55,10 +55,16 @@ def create_tables():
 app.include_router(api_router, prefix="/api/v1")
 
 
-@app.get("/", tags=["Health"], summary="Root health check")
-def root():
-    return {"status": "ok", "service": settings.PROJECT_NAME, "version": "1.0.0"}
+from fastapi.responses import HTMLResponse
+import os
 
+@app.get("/", response_class=HTMLResponse, tags=["Dashboard"], summary="Document Intelligence Dashboard")
+def root():
+    """Serves the frontend Vue.js dashboard."""
+    static_dir = os.path.join(os.path.dirname(__file__), "static")
+    index_path = os.path.join(static_dir, "index.html")
+    with open(index_path, "r", encoding="utf-8") as f:
+        return f.read()
 
 @app.get("/health", tags=["Health"], summary="Liveness probe")
 def health():
