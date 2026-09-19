@@ -94,10 +94,17 @@ async def upload_document(
     db.commit()
     db.refresh(doc)
 
-    # Dispatch Celery task
-    process_document.delay(doc.id)
+    # Dispatch Celery task (falls back to synchronous if Redis unavailable)
+    try:
+        process_document.delay(doc.id)
+        logger.info(f"Document {doc.id} queued via Celery by user {current_user.id}.")
+    except Exception as celery_err:
+        logger.warning(
+            f"Celery unavailable ({celery_err}), running extraction synchronously for doc {doc.id}."
+        )
+        from app.tasks.document_tasks import run_extraction_sync
+        run_extraction_sync(doc.id)
 
-    logger.info(f"Document {doc.id} uploaded by user {current_user.id}. Celery task dispatched.")
 
     return DocumentUploadResponse(
         id=doc.id,
