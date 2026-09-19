@@ -1,76 +1,85 @@
 <div align="center">
 
-# 🧠 Document Intelligence & Question Extraction Service
-**An Enterprise-Grade AI Service for Asynchronous Document Parsing**
+# 🧠 Document Intelligence & AI Question Extraction
 
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-316192?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
-[![Celery](https://img.shields.io/badge/Celery-5.3-37814A?style=for-the-badge&logo=celery&logoColor=white)](https://docs.celeryq.dev/)
-[![Gemini Vision](https://img.shields.io/badge/AI-Gemini_1.5_Flash-EA4335?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+**A Highly Scalable, Event-Driven Backend System for Automated Examination Processing**
 
-[Features](#-features) • [Architecture](#-architecture--workflow) • [Quick Start](#-quick-start) • [API Documentation](#-api-endpoints) • [Demonstration](#-demonstration-guide)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688.svg?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-316192.svg?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Redis-7-DC382D.svg?style=flat&logo=redis&logoColor=white)](https://redis.io/)
+[![Celery](https://img.shields.io/badge/Celery-5.3-37814A.svg?style=flat&logo=celery&logoColor=white)](https://docs.celeryq.dev/)
+[![Gemini 1.5 Flash](https://img.shields.io/badge/AI-Gemini_1.5_Vision-EA4335.svg?style=flat&logo=google&logoColor=white)](https://ai.google.dev/)
+[![Docker Compose](https://img.shields.io/badge/Docker-Compose-2496ED.svg?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
+
+[**Architecture**](#%EF%B8%8F-system-architecture) • [**Key Features**](#-key-features) • [**API Reference**](#-api-endpoints) • [**Local Deployment**](#-local-deployment) • [**Evaluation Guide**](#-evaluation-guide)
 
 ---
 </div>
 
-> **Pragati Bharati Assignment Submission**  
-> A scalable, event-driven backend service that accepts imperfect PDF/Image documents (scans, low-res, rotated) and extracts structured, machine-readable question banks using Google's Gemini Vision AI.
+> **Mission:** Move learning beyond traditional methods by converting raw, unstructured examination papers (PDFs, skewed scans, images) into highly structured, machine-readable JSON data—instantly and asynchronously.
 
 ---
 
-## ✨ Features
+## ⚡ Key Features
 
-* **🚀 Fully Asynchronous Pipeline:** Powered by **Celery & Redis**. Clients upload documents and receive a `202 Accepted` instantly, polling for completion without blocking network threads.
-* **🧠 Next-Gen Extraction:** Uses **Google Gemini 1.5 Flash (Vision)** instead of fragile OCR (Tesseract). Flawlessly handles complex layouts, split pages, and visual diagrams natively.
-* **🛡️ Enterprise Security:** 
-  * Strict **JWT** (JSON Web Token) Bearer authentication.
-  * **RFC 7807** standard Problem Details for robust API error handling.
-  * Deep **Magic-Byte** validation to prevent malicious payload executions (bypassing simple MIME-type spoofing).
-* **📊 Confidence & Review Flags:** Implements a strict confidence scoring heuristic (0.0 to 1.0). Low confidence extractions are automatically flagged in a dedicated `/warnings` endpoint for human review.
-* **🔗 Answer Key Relationships:** Upload Question Papers and Answer Keys separately and dynamically link them via foreign-key relationships.
+### 1. Robust Asynchronous Pipeline
+Built for high-throughput ingestion. Client uploads return a HTTP `202 Accepted` instantly. Heavy AI-extraction workloads are offloaded to **Celery Workers** backed by a **Redis Broker**, ensuring the FastAPI web server remains highly concurrent and responsive.
+
+### 2. Next-Gen Vision AI Extraction
+Traditional OCR engines (like Tesseract) struggle with complex layouts, math formulas, and multi-page questions. This system leverages **Google Gemini 1.5 Flash (Vision)** to natively understand documents visually. It seamlessly extracts questions, multiple-choice options, answers, and context across split pages.
+
+### 3. Enterprise-Grade Security
+* **Stateless Auth:** Secure JWT (JSON Web Token) bearer authentication with bcrypt password hashing.
+* **Malware Prevention:** Deep file inspection using "Magic Byte" signatures (not just MIME-type spoofing).
+* **Path Traversal Protection:** Files are stored using cryptographic UUIDs within isolated user directories.
+
+### 4. Resiliency & Observability
+* **RFC 7807 Error Handling:** All API errors adhere to the Problem Details for HTTP APIs standard.
+* **Idempotent Workers:** Celery tasks are designed idempotently, allowing safe retries without data duplication if network failures occur.
+* **Confidence Scoring:** Every extracted question receives a normalized confidence score (0.0 - 1.0). Low confidence results are automatically flagged for human-in-the-loop (HITL) review.
 
 ---
 
-## 🏗️ Architecture & Workflow
+## 🏗️ System Architecture
 
-The system utilizes a modern, event-driven microservices approach.
+The architecture separates concerns into highly decoupled layers:
 
+### The Flow of Data
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Client
-    participant API as 🚀 FastAPI (API Layer)
+    actor User as 👤 Client
+    participant API as 🚀 FastAPI (API Gateway)
     participant DB as 🐘 PostgreSQL
-    participant Redis as 🔴 Redis Broker
-    participant Worker as ⚙️ Celery Worker
-    participant Gemini as 🧠 Gemini Vision AI
+    participant Redis as 🔴 Redis Queue
+    participant Celery as ⚙️ Celery Worker
+    participant AI as 🧠 Gemini Vision AI
 
-    Client->>API: POST /documents/upload (PDF/Image)
-    API->>API: Validate Magic Bytes & Token
-    API->>DB: Insert Document (status: pending)
-    API->>Redis: Publish extraction Task
-    API-->>Client: 202 Accepted (Document ID)
+    User->>API: POST /api/v1/documents/upload (PDF/Img)
+    API->>API: Validate Magic Bytes & JWT Token
+    API->>DB: INSERT Document (status: 'pending')
+    API->>Redis: Publish Extraction Event
+    API-->>User: 202 Accepted (doc_id)
     
-    Worker->>Redis: Consume Task
-    Worker->>DB: Update status -> processing
-    Worker->>Gemini: Upload Document & Prompt
-    Gemini-->>Worker: Return Structured JSON
-    Worker->>DB: Persist Questions & Options
-    Worker->>DB: Update status -> completed
+    Celery->>Redis: Consume Extraction Event
+    Celery->>DB: UPDATE status -> 'processing'
+    Celery->>AI: Send File & Prompt via Google SDK
+    AI-->>Celery: Return Structured JSON
+    Celery->>DB: INSERT Questions, Options, Context
+    Celery->>DB: UPDATE status -> 'completed'
     
-    Client->>API: GET /documents/{id}/questions
-    API-->>Client: 200 OK (Structured JSON Output)
+    User->>API: GET /api/v1/documents/{doc_id}/questions
+    API-->>User: 200 OK (Clean JSON Array)
 ```
 
 <details>
-<summary><b>Click to view Entity Relationship Diagram (ERD)</b></summary>
+<summary><b>🔍 View Database Schema (ERD)</b></summary>
 <br>
 
 ```mermaid
 erDiagram
-    USERS ||--o{ DOCUMENTS : "uploads"
+    USERS ||--o{ DOCUMENTS : "owns"
     DOCUMENTS ||--o{ QUESTIONS : "contains"
     DOCUMENTS ||--o| DOCUMENTS : "related_answer_key"
 
@@ -84,7 +93,7 @@ erDiagram
         int id PK
         string filename
         string file_path
-        string status "pending|processing|completed|failed"
+        string status "enum: pending, processing, completed, failed"
         int user_id FK
         int related_doc_id FK
     }
@@ -103,14 +112,15 @@ erDiagram
 
 ---
 
-## 🚀 Quick Start
+## 🛠️ Local Deployment
+
+Deploying the entire microservice stack locally takes less than a minute.
 
 ### Prerequisites
-* [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed & running.
-* A free [Google Gemini API Key](https://aistudio.google.com/).
+* **Docker Desktop** (Engine & Compose)
+* **Google Gemini API Key** (Get one for free at [Google AI Studio](https://aistudio.google.com/))
 
-### 1. Configure Environment
-Clone the repository and set up your environment variables.
+### 1. Setup Environment
 ```bash
 git clone https://github.com/ruthwik-thotapelli/document-intelligence-question-extraction-service.git
 cd document-intelligence-question-extraction-service
@@ -120,49 +130,53 @@ cp .env.example .env
 ```
 👉 *Open `.env` and paste your `GEMINI_API_KEY` into the file.*
 
-### 2. Launch the Stack
-Using the included `Makefile` for zero-configuration startup:
+### 2. Boot the Infrastructure
 ```bash
-# Start PostgreSQL, Redis, FastAPI, and Celery workers
-make up
+# Start all containers in detached mode
+docker-compose up --build -d
 
-# Run database schema migrations
-make reset-db
+# Run Alembic database migrations
+docker-compose exec web alembic upgrade head
 ```
-*(No `make`? Use `docker-compose up --build -d` and `docker-compose exec web alembic upgrade head`)*
 
-### 3. Explore the API
-Navigate to the interactive Swagger documentation:
-**🔗 [http://localhost:8000/docs](http://localhost:8000/docs)**
+### 3. Verify Deployment
+* **API Documentation:** [http://localhost:8000/docs](http://localhost:8000/docs)
+* **ReDoc Format:** [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
 ---
 
 ## 🔌 API Endpoints
 
-| Category | Method | Endpoint | Description |
+The API is fully documented via OpenAPI/Swagger. Below is a high-level overview:
+
+| Group | Method | Endpoint | Description |
 | :--- | :--- | :--- | :--- |
-| **Auth** | `POST` | `/api/v1/auth/register` | Register a new user |
-| **Auth** | `POST` | `/api/v1/auth/login` | Obtain a JWT Bearer token |
+| **Authentication** | `POST` | `/api/v1/auth/register` | Register a new user |
+| | `POST` | `/api/v1/auth/login` | Obtain a JWT Bearer token |
 | **Ingestion** | `POST` | `/api/v1/documents/upload` | Upload a PDF/PNG/JPG securely |
-| **Tracking** | `GET` | `/api/v1/documents/{id}/status` | Long-poll document processing state |
-| **Extraction**| `GET` | `/api/v1/documents/{id}/questions` | Retrieve extracted JSON questions |
-| **Scoring** | `GET` | `/api/v1/documents/{id}/answers` | Extract merged Answer Key data |
+| **Querying** | `GET` | `/api/v1/documents/` | List all documents for current user |
+| | `GET` | `/api/v1/documents/{id}` | Get document metadata |
+| | `GET` | `/api/v1/documents/{id}/status` | Long-poll document processing state |
+| **Extraction** | `GET` | `/api/v1/documents/{id}/questions` | Retrieve extracted JSON questions |
+| | `GET` | `/api/v1/documents/{id}/answers` | Extract merged Answer Key data |
 | **Review** | `GET` | `/api/v1/documents/{id}/warnings` | Flagged low-confidence anomalies |
 
 ---
 
-## 🧪 Demonstration Guide
+## 🎯 Evaluation Guide (For Reviewers)
 
-To fully test the system's capabilities against the assignment constraints:
+To fully validate this submission against the engineering constraints, we recommend the following flow:
 
-1. **Import the Postman Collection:** Located in `/postman/collection.json`.
-2. **Execute Steps 1 & 2:** Register a user and login to automatically set your JWT token.
-3. **Upload the Imperfect Scan:** Use the `3a. Upload PDF` request and attach `samples/question_paper.pdf`.
-4. **Observe Asynchrony:** Immediately hit `4. Check Status` to see it processing in the background queue.
-5. **Analyze Output:** Once completed, hit `5. Get Extracted Questions`. Notice how the system successfully parsed **Question 5**, which spans across multiple pages, preserving its continuity seamlessly.
+1. **Import Postman Collection:** Load `postman/collection.json` into your Postman workspace.
+2. **Execute Steps 1 & 2:** Register and Login. Your JWT token is set automatically.
+3. **Test Imperfect Scans:** Execute `3a. Upload PDF` and attach `samples/question_paper.pdf`.
+4. **Observe Asynchrony:** Hit `4. Check Processing Status`. The API does not block; it delegates to Celery.
+5. **Verify AI Accuracy:** Once status is `completed`, hit `5. Get Extracted Questions`. You will notice:
+   * **Question 5** spans multiple pages but is merged perfectly.
+   * Multiple-choice options are parsed into a distinct JSON array.
+   * The **Answer Key** at the end of the document is correctly mapped back to the questions via the `/answers` endpoint.
 
 ---
-
 <div align="center">
-  <i>Developed with ❤️ for Pragati Bharati Engineering Assessment</i>
+  <i>Engineered for scale. Built for the Pragati Bharati Backend Evaluation.</i>
 </div>
